@@ -1,8 +1,8 @@
 #!/bin/sh
 
-# Load Environmnt Variables
+# Load Environment Variables
 # shellcheck source=../udm-traefik.env
-. /mnt/data/udm-traefik/udm-traefik.env
+. /data/udm-traefik/udm-traefik.env
 
 if [ ! -f "${CRON_FILE}" ]; then
 	# Sleep for 5 minutes to avoid restarting

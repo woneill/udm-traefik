@@ -4,7 +4,7 @@ set -e
 
 # Load environment variables
 # shellcheck source=udm-traefik.env
-. /mnt/data/udm-traefik/udm-traefik.env
+. /data/udm-traefik/udm-traefik.env
 
 generate_traefik_hosts() {
     API_REQUEST=$(curl -fsSL --resolve "${TRAEFIK_HOSTNAME}:${TRAEFIK_API_PORT}:${TRAEFIK_IPADDRESS}" https://"${TRAEFIK_HOSTNAME}"/api/http/routers)
@@ -16,7 +16,7 @@ generate_traefik_hosts() {
 
     echo "${API_REQUEST}" | jq -r --arg TRAEFIK_IPADDRESS "${TRAEFIK_IPADDRESS}" \
         '.[] | ( .rule | capture("(?<host>(?<=`).+(?=`))") | "host-record=" + .host + "," + $TRAEFIK_IPADDRESS )' | \
-    sort > "${UDM_TRAEFIK_PATH}"/traefik_hosts
+    sort | uniq > "${UDM_TRAEFIK_PATH}"/traefik_hosts
     res=$?
     if test "$res" != "0"; then
         echo "the jq command failed with: $res"
@@ -42,9 +42,9 @@ fi
 
 # Setup cron job
 if [ ! -f "${CRON_FILE}" ]; then
-	echo "0 3 * * * sh ${UDM_TRAEFIK_PATH}/udm-traefik.sh" > "${CRON_FILE}"
+	printf 'MAILTO=""\n0 3 * * * root %s/udm-traefik.sh' "${UDM_TRAEFIK_PATH}" > "${CRON_FILE}"
 	chmod 644 "${CRON_FILE}"
-	/etc/init.d/crond reload "${CRON_FILE}"
+	/etc/init.d/cron reload "${CRON_FILE}"
 fi
 
 generate_traefik_hosts \
